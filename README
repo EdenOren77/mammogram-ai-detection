@@ -1,0 +1,5 @@
+# Mammogram AI Detection
+
+A deep learning project for detecting breast tumors (benign/malignant/normal) in ultrasound mammograms, using CNNs, Grad-CAM, and a Streamlit UI.
+
+> Educational use only – not for medical diagnostics.
