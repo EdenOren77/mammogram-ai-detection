@@ -14,7 +14,11 @@ class SimpleCNN(nn.Module):
         self.conv2=nn.Conv2d(16,32,kernel_size=3,padding=1)
 
         #Fully connected layers
-        self.fc1=nn.Linear(32*121*138,64)
+        
+        #Input image size:224x224 -> After 2x maxpool(2,2): 56x56
+        #output of conv2 block = [batch_size,32,56,56]-> so input to fc1= 32x56x56 
+         
+        self.fc1=nn.Linear(32*56*56,64)
         self.fc2=nn.Linear(64,3) #normal,benign,malignant
 
     def forward(self,x):
