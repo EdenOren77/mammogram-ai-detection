@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import Dataset
 import cv2
 import os
+from PIL import Image 
 
 class CustomDataset(Dataset):
     def __init__(self, csv_path, transform=None):
@@ -29,12 +30,16 @@ class CustomDataset(Dataset):
         if image is None:
              raise ValueError(f"Failed to load image via cv2: {image_path}")
 
-        image=cv2.resize(image,(224,224))
-    
-        image=torch.tensor(image,dtype=torch.float32).unsqueeze(0)/255.0
-        label=torch.tensor(label,dtype=torch.long)
-        
+        image_pil=Image.fromarray(image).convert("RGB")
         if self.transform:
-            image=self.transform(image)
+            image_tensor=self.transform(image_pil)
+        else:
+            import torchvision.transforms as T
+            base_transform=T.Compose([
+                T.Resize((224,224)),
+                T.ToTensor()
+            ])
+            image_tensor=base_transform(image_pil)
+        label_tensor=torch.tensor(label,dtype=torch.long)
             
-        return image,label
+        return image_tensor,label_tensor
