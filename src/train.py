@@ -1,9 +1,11 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader,random_split
+from torch.utils.data import DataLoader,Subset
 import os
 import sys
+from torchvision import transforms
 
 curr_dir=os.path.dirname(os.path.abspath(__file__))
 sys.path.append(curr_dir)
@@ -13,28 +15,73 @@ from dataset_loader import CustomDataset
 
 #Training configuration
 BATCH_SIZE=16
-LEARNING_RATE=0.001
+LEARNING_RATE=0.0001
 NUM_EPOCHS=10
+base_dir=os.path.dirname(curr_dir)
+data_path=os.path.join(base_dir,"data","image_data.csv")
+save_path=os.path.join(base_dir,"saved_models","resnet50_mammogram.pth")
 
-def train_model():
+def get_device():
     # Device configuration (a graphics card if available)
     if torch.backends.mps.is_available():
-        device=torch.device("mps")
+        return torch.device("mps") #Mac M1/M2/M3
     elif torch.backends.cuda.is_available():
-        device=torch.device("cuda")
+        return torch.device("cuda") #Nvidia GPU
     else:
-        device=torch.device("cpu")
+        return torch.device("cpu") #Standard CPU
 
-    base_dir=os.path.dirname(curr_dir)
-    data_path=os.path.join(base_dir,"data","image_data.csv")
-    save_path=os.path.join(base_dir,"saved_models","resnet50_mammogram.pth")
 
-    full_dataset=CustomDataset(data_path)
+device=get_device()
+
+MEAN=[0.485,0.456,0.406]
+STD=[0.229,0.224,0.225]
+data_transforms = {
+    'train': transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomRotation(15),
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD)
+    ]),
+    'val': transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD)
+    ]),
+}
+
+def evaluate(model,loader,device):
+    #validation
+    model.eval()
+    correct=0
+    total=0
+
+    with torch.no_grad():
+        for images,labels in loader:
+            images=images.to(device)
+            labels=labels.to(device)
+            outputs=model(images)
+            _,predicted=torch.max(outputs.data,1)
+            total+=labels.size(0)
+            correct+=(predicted==labels).sum().item()
+    
+    return 100*correct/total
+
+
+def train_model():
+    full_train_dataset=CustomDataset(data_path,transform=data_transforms['train'])
+    full_val_dataset=CustomDataset(data_path,transform=data_transforms['val'])
+    # full_dataset=CustomDataset(data_path)
 
     #split the data- 80% for train and 20% for the validation
-    train_size=int(0.8*len(full_dataset))
-    val_size=len(full_dataset)-train_size
-    train_dataset,val_dataset=random_split(full_dataset,[train_size,val_size])
+    dataset_size=len(full_train_dataset)
+    indices=list(range(dataset_size))
+    split=int(np.floor(0.2*dataset_size))
+    np.random.shuffle(indices)
+    train_indices, val_indices = indices[split:], indices[:split]
+
+    train_dataset=Subset(full_train_dataset,train_indices)
+    val_dataset=Subset(full_val_dataset,val_indices)
 
     #dataLoader
     train_loader=DataLoader(train_dataset,batch_size=BATCH_SIZE,shuffle=True) #shuffle=True so that the network does not learn a fixed order
@@ -80,23 +127,6 @@ def train_model():
               f"Val Acc: {val_acc:.2f}%")
         torch.save(model.state_dict(), save_path)
     
-
-def evaluate(model,loader,device):
-    #validation
-    model.eval()
-    correct=0
-    total=0
-
-    with torch.no_grad():
-        for images,labels in loader:
-            images=images.to(device)
-            labels=labels.to(device)
-            outputs=model(images)
-            _,predicted=torch.max(outputs.data,1)
-            total+=labels.size(0)
-            correct+=(predicted==labels).sum().item()
-    
-    return 100*correct/total
 
 if __name__ == "__main__":
     train_model()
