@@ -1,5 +1,27 @@
-# Mammogram AI Detection
+# 🎗️ Mammogram AI Detection
 
-A deep learning project for detecting breast tumors (benign/malignant/normal) in ultrasound mammograms, using CNNs, Grad-CAM, and a Streamlit UI.
+An end-to-end Deep Learning project for detecting breast tumors (Benign / Malignant / Normal) in ultrasound images.
+The system uses a fine-tuned **ResNet50** model, served via a **FastAPI** backend, and accessible through a user-friendly **Streamlit** dashboard.
 
-> Educational use only – not for medical diagnostics.
+> **Disclaimer:** This project is for educational and research purposes only. It is not intended for medical diagnosis.
+
+---
+
+## Model Performance
+We utilized **Transfer Learning** with the **ResNet50** architecture (pretrained on ImageNet) and fine-tuned it on breast ultrasound data.
+
+- **Architecture:** ResNet50
+- **Accuracy:** ~84% on the test set
+- **Classes:** Normal, Benign, Malignant
+- **Techniques:** Data Augmentation, Normalization, Softmax Probability Distribution.
+
+
+## How to Run the Project
+
+To run the full system, you need to launch both the **Backend Server** and the **Frontend UI** simultaneously (in separate terminals).
+
+```bash
+python api/server.py
+
+```bash
+streamlit run frontend/app.py
