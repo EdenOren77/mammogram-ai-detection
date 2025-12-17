@@ -13,10 +13,12 @@ st.markdown(
 .stApp {
     background: radial-gradient(
         circle at top,
-        rgba(255, 182, 193, 0.18),
-        rgba(255, 255, 255, 1) 55%
+        rgba(255, 182, 193, 0.32),
+        rgba(255, 235, 242, 0.6) 40%,
+        rgba(255, 255, 255, 1) 75%
     );
 }
+
 
 /* Content width & spacing */
 .block-container {
